@@ -12,9 +12,29 @@ export default function SignUpPage() {
         <span className="text-xl mb-4 text-center">Cadastro</span>
         <Formik
           initialValues={initialValues}
-          // To Do
           onSubmit={async (values) => {
-            alert(`Email: ${values.email}\nSenha: ${values.password}`);
+            try {
+              const res = await fetch("http://localhost:3333/users", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  ...values,
+                  role: "STUDENT",
+                }),
+              });
+
+              if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Erro no cadastro");
+              }
+
+              alert("Usuário cadastrado com sucesso!");
+              window.location.href = "/login";
+            } catch (err: unknown) {
+              alert("Erro ao cadastrar: " + err);
+            }
           }}
         >
           {(props) => (
@@ -71,7 +91,7 @@ export default function SignUpPage() {
                   color="primary"
                   fullWidth
                 >
-                  Entrar
+                  Cadastrar
                 </Button>
               </div>
             </Form>

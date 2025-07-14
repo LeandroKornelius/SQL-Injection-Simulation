@@ -3,6 +3,9 @@
 import { Button, TextField } from "@mui/material";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { getToken } from "../utils/auth";
+import { signPayload } from "../utils/crypto";
 
 const initialValues = {
   card_number: "",
@@ -13,32 +16,67 @@ const initialValues = {
 
 export default function CardDetailsPage() {
   const router = useRouter();
+  const [privateKeyPem, setPrivateKeyPem] = useState<string | null>(null);
+  const [keyLoaded, setKeyLoaded] = useState(false);
+
+  const handleKeyUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPrivateKeyPem(e.target?.result as string);
+      setKeyLoaded(true);
+    };
+    reader.readAsText(file);
+  };
 
   return (
     <div className="flex min-h-screen justify-center items-center">
-      <div className="grid justify-items-center w-80 p-6 border-2 border-gray-300 rounded-lg shadow-md">
-        <span className="text-xl mb-4 text-center font-bold">Dados do Cartão</span>
+      <div className="grid justify-items-center w-100 p-6 border-2 border-gray-300 rounded-lg shadow-md">
+        <span className="text-xl mb-4 text-center font-bold">
+          Dados do Cartão
+        </span>
 
         <Formik
           initialValues={initialValues}
           onSubmit={async (values) => {
-            const userId = 1;
+            const token = getToken();
+            if (!token || !privateKeyPem) {
+              alert("Você precisa estar logado e carregar a chave privada.");
+              return;
+            }
 
             const payload = {
-              user_id: userId,
-              card_number: values.card_number,
-              card_owner: values.card_owner,
-              expiry_date: values.expiry_date,
+              cardNumber: values.card_number,
+              cardOwner: values.card_owner,
+              expiryDate: values.expiry_date,
               cvv: values.cvv,
             };
 
-            console.log("Payload enviado:", payload);
+            try {
+              const signature = await signPayload(payload, privateKeyPem);
 
-            alert(
-              `Número: ${values.card_number}\nTitular: ${values.card_owner}\nValidade: ${values.expiry_date}\nCVV: ${values.cvv}`
-            );
+              const res = await fetch("http://localhost:3333/payments", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ payload, signature }),
+              });
 
-            router.push("/perfil");
+              const result = await res.json();
+
+              if (!res.ok)
+                throw new Error(result.message || "Erro no pagamento");
+
+              alert(`Pagamento criado com sucesso! ID: ${result.paymentId}`);
+              router.push("/perfil");
+            } catch (err) {
+              console.error(err);
+              alert("Erro ao enviar pagamento.");
+            }
           }}
         >
           {(props) => (
@@ -91,6 +129,18 @@ export default function CardDetailsPage() {
                   onChange={props.handleChange}
                   fullWidth
                 />
+              </div>
+
+              <div className="mt-2">
+                <label className="text-sm text-gray-600 mb-1 block">
+                  Upload da Chave Privada (.pem):
+                </label>
+                <input type="file" accept=".pem" onChange={handleKeyUpload} />
+                {keyLoaded && (
+                  <div className="text-green-600 text-sm mt-1">
+                    ✔️ Chave carregada com sucesso
+                  </div>
+                )}
               </div>
 
               <Button

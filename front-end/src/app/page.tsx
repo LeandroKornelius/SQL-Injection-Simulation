@@ -10,7 +10,7 @@ export default function MainPage() {
     <div className="flex min-h-screen justify-center items-center">
       <div className="grid justify-items-center w-72 p-6 border-2 border-gray-300 rounded-lg shadow-md">
         <span className="text-xl mb-4 text-center">Fit App</span>
-        
+
         <div className="flex flex-col space-y-2 w-full">
           <div>
             <Button
@@ -40,26 +40,6 @@ export default function MainPage() {
               onClick={() => router.push("/exercises")}
             >
               Exercícios
-            </Button>
-          </div>
-          <div>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={() => router.push("/perfil")}
-            >
-              Meus Exercícios
-            </Button>
-          </div>
-          <div>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={() => router.push("/payment")}
-            >
-              Dados Cartão
             </Button>
           </div>
         </div>
