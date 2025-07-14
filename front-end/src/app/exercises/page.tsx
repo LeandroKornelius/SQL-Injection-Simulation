@@ -1,18 +1,45 @@
 "use client";
 
-import { Button, Paper, TextField, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
+import {
+  Button,
+  CircularProgress,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
+
+interface Exercise {
+  id: number;
+  name: string;
+  description?: string;
+}
 
 export default function ExercisesPage() {
-  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const mockExercises = [
-    "Abdominal",
-    "Flexão de braço",
-    "Agachamento",
-    "Corrida estacionária",
-    "Prancha",
-  ];
+  const handleSearch = async () => {
+    if (!searchTerm) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3333/exercises/search?value=${encodeURIComponent(
+          searchTerm
+        )}`
+      );
+      if (!res.ok) throw new Error("Erro ao buscar exercícios");
+
+      const data = await res.json();
+      setExercises(data);
+    } catch (err) {
+      console.error("Erro na busca:", err);
+      alert("Erro ao buscar exercícios");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen justify-center items-center">
@@ -26,19 +53,40 @@ export default function ExercisesPage() {
               variant="outlined"
               fullWidth
               size="small"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div>
-            <Button variant="contained" color="primary" fullWidth>
-              Buscar
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleSearch}
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Buscar"
+              )}
             </Button>
           </div>
         </div>
 
         <div className="w-full space-y-2 pt-2">
-          {mockExercises.map((exercise, index) => (
-            <Paper key={index} className="p-2" elevation={2}>
-              <Typography variant="body1">{exercise}</Typography>
+          {exercises.length === 0 && !loading && (
+            <Typography variant="body2" className="text-center">
+              Nenhum exercício encontrado.
+            </Typography>
+          )}
+          {exercises.map((exercise) => (
+            <Paper key={exercise.id} className="p-2" elevation={2}>
+              <Typography variant="body1" className="font-semibold">
+                {exercise.name}
+              </Typography>
+              {exercise.description && (
+                <Typography variant="body2">{exercise.description}</Typography>
+              )}
             </Paper>
           ))}
         </div>
