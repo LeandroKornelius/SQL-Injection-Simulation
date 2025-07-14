@@ -52,7 +52,7 @@ export default function MyWorkoutPage() {
     <div className="flex min-h-screen justify-center items-start py-6">
       <div className="grid justify-items-center w-full max-w-md space-y-6">
         <Typography variant="h5" className="text-center font-semibold">
-          Salve {user?.name || "atleta"}!
+          Salve, {user?.name || "atleta"}!
         </Typography>
 
         <span className="text-3xl font-bold text-center">Meus Treinos</span>
